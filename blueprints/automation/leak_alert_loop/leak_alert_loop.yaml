@@ -1,0 +1,106 @@
+blueprint:
+  name: Leak Alert Notification Loop with Siren & TTS
+  description: >
+    When a leak is detected, this automation announces the alert via TTS, sends a mobile notification with Snooze and Dismiss actions, and triggers a repeating siren loop. Repeats every 5 minutes until dismissed or the leak clears.
+  domain: automation
+  input:
+    leak_sensors:
+      name: Leak Sensors
+      selector:
+        entity:
+          multiple: true
+          domain: binary_sensor
+          device_class: moisture
+
+    siren_switch:
+      name: Siren Switch
+      selector:
+        entity:
+          domain: switch
+
+    media_player_target:
+      name: Media Player for TTS
+      selector:
+        entity:
+          domain: media_player
+
+    notify_device:
+      name: Mobile Notification Target
+      selector:
+        device:
+          integration: mobile_app
+
+    snooze_boolean:
+      name: Snooze Input Boolean
+      selector:
+        entity:
+          domain: input_boolean
+
+    sensor_name_map:
+      name: Sensor Friendly Names
+      description: >
+        Map sensor entity IDs to user-friendly names for TTS and notifications.
+        Example: {"binary_sensor.kitchen_leak_sensor": "Kitchen Sink"}
+      default: {}
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input leak_sensors
+    to: "on"
+
+variables:
+  triggered_entity: "{{ trigger.entity_id }}"
+  sensor_friendly_name: >-
+    {% set mapping = i(sensor_name_map) %}
+    {{ mapping.get(trigger.entity_id, state_attr(trigger.entity_id, 'friendly_name') or trigger.to_state.name) }}
+
+action:
+  - repeat:
+      while:
+        - condition: or
+          conditions:
+            {% for entity in leak_sensors %}
+            - condition: state
+              entity_id: {{ entity }}
+              state: "on"
+            {% endfor %}
+            - condition: state
+              entity_id: !input snooze_boolean
+              state: "on"
+      sequence:
+        - service: media_player.play_media
+          data:
+            media_content_id: >-
+              media-source://tts/tts.home_assistant_cloud?message=Attention%2C+a+water+leak+has+been+detected+at+the+{{ sensor_friendly_name | replace(' ', '+') }}.+Please+check+the+area+and+turn+off+the+water.&language=en-US&voice=JennyNeural
+            media_content_type: provider
+          target:
+            entity_id: !input media_player_target
+
+        - service: notify.mobile_app_{{ device_attr(notify_device, "name") | lower | replace(" ", "_") }}
+          data:
+            title: "🚨 URGENT - Water Leak Detected!"
+            message: "Leak detected at {{ sensor_friendly_name }}. Tap to respond."
+            data:
+              actions:
+                - action: "SNOOZE_LEAK"
+                  title: "Snooze"
+                - action: "DISMISS_LEAK"
+                  title: "Dismiss"
+
+        - delay: "00:00:10"
+
+        - repeat:
+            count: 3
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: !input siren_switch
+              - delay: "00:00:08"
+              - service: switch.turn_off
+                target:
+                  entity_id: !input siren_switch
+              - delay: "00:00:12"
+
+        - delay: "00:05:00"
