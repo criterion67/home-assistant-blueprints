@@ -61,11 +61,14 @@ action:
       while:
         - condition: or
           conditions:
-            {% for entity in leak_sensors %}
-            - condition: state
-              entity_id: {{ entity }}
-              state: "on"
-            {% endfor %}
+            - condition: template
+              value_template: >-
+                {% for sensor in i('leak_sensors') %}
+                  {% if is_state(sensor, 'on') %}
+                    true
+                  {% endif %}
+                {% endfor %}
+                false
             - condition: state
               entity_id: !input snooze_boolean
               state: "on"
