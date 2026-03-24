@@ -1,0 +1,435 @@
+blueprint:
+  name: "Medication Reminder - Notifications with Snooze"
+  description: >
+    Sends persistent mobile notifications at up to 6 scheduled medication times.
+    Each notification has a Taken button (clears the notification) and a Snooze
+    button (re-sends after a configurable delay). Pairs with the companion
+    "Medication Reminder - Handle Notification Actions" blueprint.
+
+    Requires one input_boolean snooze helper per active time slot.
+    Create these before importing (e.g. input_boolean.med_snooze_slot1).
+
+    The notification tag per slot ensures only one notification per slot is
+    shown at a time. Snoozed reminders replace the previous notification.
+  domain: automation
+  homeassistant:
+    min_version: "2024.10.0"
+  input:
+    notify_service:
+      name: (Required) Mobile Notification Service
+      description: >
+        Your mobile app notification service.
+        Example: notify.mobile_app_my_phone
+      selector:
+        text: {}
+
+    snooze_minutes:
+      name: (Optional) Snooze Duration (minutes)
+      description: How long to wait before re-sending a snoozed reminder.
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 120
+          unit_of_measurement: minutes
+          mode: box
+
+    slot1_enabled:
+      name: "Slot 1 - Enable"
+      default: true
+      selector:
+        boolean: {}
+    slot1_time:
+      name: "Slot 1 - Time"
+      default: "07:00:00"
+      selector:
+        time: {}
+    slot1_title:
+      name: "Slot 1 - Notification Title"
+      default: "💊 Medication Reminder"
+      selector:
+        text: {}
+    slot1_message:
+      name: "Slot 1 - Medication List / Notes"
+      default: "Time to take your medications."
+      selector:
+        text:
+          multiline: true
+    slot1_snooze_boolean:
+      name: "Slot 1 - Snooze Helper"
+      description: input_boolean to track snooze state for this slot.
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot2_enabled:
+      name: "Slot 2 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot2_time:
+      name: "Slot 2 - Time"
+      default: "08:00:00"
+      selector:
+        time: {}
+    slot2_title:
+      name: "Slot 2 - Notification Title"
+      default: "💊 Medication Reminder"
+      selector:
+        text: {}
+    slot2_message:
+      name: "Slot 2 - Medication List / Notes"
+      default: "Time to take your medications."
+      selector:
+        text:
+          multiline: true
+    slot2_snooze_boolean:
+      name: "Slot 2 - Snooze Helper"
+      description: input_boolean to track snooze state for this slot. Required if Slot 2 is enabled.
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot3_enabled:
+      name: "Slot 3 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot3_time:
+      name: "Slot 3 - Time"
+      default: "10:00:00"
+      selector:
+        time: {}
+    slot3_title:
+      name: "Slot 3 - Notification Title"
+      default: "💊 Medication Reminder"
+      selector:
+        text: {}
+    slot3_message:
+      name: "Slot 3 - Medication List / Notes"
+      default: "Time to take your medications."
+      selector:
+        text:
+          multiline: true
+    slot3_snooze_boolean:
+      name: "Slot 3 - Snooze Helper"
+      description: input_boolean to track snooze state for this slot. Required if Slot 3 is enabled.
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot4_enabled:
+      name: "Slot 4 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot4_time:
+      name: "Slot 4 - Time"
+      default: "12:00:00"
+      selector:
+        time: {}
+    slot4_title:
+      name: "Slot 4 - Notification Title"
+      default: "💊 Medication Reminder"
+      selector:
+        text: {}
+    slot4_message:
+      name: "Slot 4 - Medication List / Notes"
+      default: "Time to take your medications."
+      selector:
+        text:
+          multiline: true
+    slot4_snooze_boolean:
+      name: "Slot 4 - Snooze Helper"
+      description: input_boolean to track snooze state for this slot. Required if Slot 4 is enabled.
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot5_enabled:
+      name: "Slot 5 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot5_time:
+      name: "Slot 5 - Time"
+      default: "17:00:00"
+      selector:
+        time: {}
+    slot5_title:
+      name: "Slot 5 - Notification Title"
+      default: "💊 Medication Reminder"
+      selector:
+        text: {}
+    slot5_message:
+      name: "Slot 5 - Medication List / Notes"
+      default: "Time to take your medications."
+      selector:
+        text:
+          multiline: true
+    slot5_snooze_boolean:
+      name: "Slot 5 - Snooze Helper"
+      description: input_boolean to track snooze state for this slot. Required if Slot 5 is enabled.
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot6_enabled:
+      name: "Slot 6 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot6_time:
+      name: "Slot 6 - Time"
+      default: "22:00:00"
+      selector:
+        time: {}
+    slot6_title:
+      name: "Slot 6 - Notification Title"
+      default: "💊 Bedtime Medications"
+      selector:
+        text: {}
+    slot6_message:
+      name: "Slot 6 - Medication List / Notes"
+      default: "Time to take your bedtime medications."
+      selector:
+        text:
+          multiline: true
+    slot6_snooze_boolean:
+      name: "Slot 6 - Snooze Helper"
+      description: input_boolean to track snooze state for this slot. Required if Slot 6 is enabled.
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+variables:
+  notify_service: !input notify_service
+  snooze_minutes: !input snooze_minutes
+  slot1_enabled: !input slot1_enabled
+  slot2_enabled: !input slot2_enabled
+  slot3_enabled: !input slot3_enabled
+  slot4_enabled: !input slot4_enabled
+  slot5_enabled: !input slot5_enabled
+  slot6_enabled: !input slot6_enabled
+
+mode: parallel
+max: 10
+
+trigger:
+  - platform: time
+    at: !input slot1_time
+    id: time_slot1
+  - platform: time
+    at: !input slot2_time
+    id: time_slot2
+  - platform: time
+    at: !input slot3_time
+    id: time_slot3
+  - platform: time
+    at: !input slot4_time
+    id: time_slot4
+  - platform: time
+    at: !input slot5_time
+    id: time_slot5
+  - platform: time
+    at: !input slot6_time
+    id: time_slot6
+  - platform: state
+    entity_id: !input slot1_snooze_boolean
+    to: "on"
+    id: snooze_slot1
+  - platform: state
+    entity_id: !input slot2_snooze_boolean
+    to: "on"
+    id: snooze_slot2
+  - platform: state
+    entity_id: !input slot3_snooze_boolean
+    to: "on"
+    id: snooze_slot3
+  - platform: state
+    entity_id: !input slot4_snooze_boolean
+    to: "on"
+    id: snooze_slot4
+  - platform: state
+    entity_id: !input slot5_snooze_boolean
+    to: "on"
+    id: snooze_slot5
+  - platform: state
+    entity_id: !input slot6_snooze_boolean
+    to: "on"
+    id: snooze_slot6
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: [time_slot1, snooze_slot1]
+          - condition: template
+            value_template: "{{ slot1_enabled }}"
+        sequence:
+          - if:
+              - condition: trigger
+                id: snooze_slot1
+            then:
+              - delay:
+                  minutes: "{{ snooze_minutes }}"
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: !input slot1_snooze_boolean
+          - action: "{{ notify_service }}"
+            data:
+              title: !input slot1_title
+              message: !input slot1_message
+              data:
+                tag: med_reminder_slot1
+                persistent: true
+                actions:
+                  - action: MED_TAKEN_SLOT1
+                    title: "✅ Taken"
+                  - action: MED_SNOOZE_SLOT1
+                    title: "⏰ Snooze"
+
+      - conditions:
+          - condition: trigger
+            id: [time_slot2, snooze_slot2]
+          - condition: template
+            value_template: "{{ slot2_enabled }}"
+        sequence:
+          - if:
+              - condition: trigger
+                id: snooze_slot2
+            then:
+              - delay:
+                  minutes: "{{ snooze_minutes }}"
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: !input slot2_snooze_boolean
+          - action: "{{ notify_service }}"
+            data:
+              title: !input slot2_title
+              message: !input slot2_message
+              data:
+                tag: med_reminder_slot2
+                persistent: true
+                actions:
+                  - action: MED_TAKEN_SLOT2
+                    title: "✅ Taken"
+                  - action: MED_SNOOZE_SLOT2
+                    title: "⏰ Snooze"
+
+      - conditions:
+          - condition: trigger
+            id: [time_slot3, snooze_slot3]
+          - condition: template
+            value_template: "{{ slot3_enabled }}"
+        sequence:
+          - if:
+              - condition: trigger
+                id: snooze_slot3
+            then:
+              - delay:
+                  minutes: "{{ snooze_minutes }}"
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: !input slot3_snooze_boolean
+          - action: "{{ notify_service }}"
+            data:
+              title: !input slot3_title
+              message: !input slot3_message
+              data:
+                tag: med_reminder_slot3
+                persistent: true
+                actions:
+                  - action: MED_TAKEN_SLOT3
+                    title: "✅ Taken"
+                  - action: MED_SNOOZE_SLOT3
+                    title: "⏰ Snooze"
+
+      - conditions:
+          - condition: trigger
+            id: [time_slot4, snooze_slot4]
+          - condition: template
+            value_template: "{{ slot4_enabled }}"
+        sequence:
+          - if:
+              - condition: trigger
+                id: snooze_slot4
+            then:
+              - delay:
+                  minutes: "{{ snooze_minutes }}"
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: !input slot4_snooze_boolean
+          - action: "{{ notify_service }}"
+            data:
+              title: !input slot4_title
+              message: !input slot4_message
+              data:
+                tag: med_reminder_slot4
+                persistent: true
+                actions:
+                  - action: MED_TAKEN_SLOT4
+                    title: "✅ Taken"
+                  - action: MED_SNOOZE_SLOT4
+                    title: "⏰ Snooze"
+
+      - conditions:
+          - condition: trigger
+            id: [time_slot5, snooze_slot5]
+          - condition: template
+            value_template: "{{ slot5_enabled }}"
+        sequence:
+          - if:
+              - condition: trigger
+                id: snooze_slot5
+            then:
+              - delay:
+                  minutes: "{{ snooze_minutes }}"
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: !input slot5_snooze_boolean
+          - action: "{{ notify_service }}"
+            data:
+              title: !input slot5_title
+              message: !input slot5_message
+              data:
+                tag: med_reminder_slot5
+                persistent: true
+                actions:
+                  - action: MED_TAKEN_SLOT5
+                    title: "✅ Taken"
+                  - action: MED_SNOOZE_SLOT5
+                    title: "⏰ Snooze"
+
+      - conditions:
+          - condition: trigger
+            id: [time_slot6, snooze_slot6]
+          - condition: template
+            value_template: "{{ slot6_enabled }}"
+        sequence:
+          - if:
+              - condition: trigger
+                id: snooze_slot6
+            then:
+              - delay:
+                  minutes: "{{ snooze_minutes }}"
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: !input slot6_snooze_boolean
+          - action: "{{ notify_service }}"
+            data:
+              title: !input slot6_title
+              message: !input slot6_message
+              data:
+                tag: med_reminder_slot6
+                persistent: true
+                actions:
+                  - action: MED_TAKEN_SLOT6
+                    title: "✅ Taken"
+                  - action: MED_SNOOZE_SLOT6
+                    title: "⏰ Snooze"
