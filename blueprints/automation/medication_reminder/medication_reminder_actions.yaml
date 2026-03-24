@@ -1,0 +1,334 @@
+blueprint:
+  name: "Medication Reminder - Handle Notification Actions"
+  description: >
+    Companion to "Medication Reminder - Notifications with Snooze".
+    Listens for Taken and Snooze button taps on medication notifications
+    and acts on them.
+
+    Taken: clears the notification silently.
+    Snooze: clears the notification and turns on the slot snooze helper,
+    which re-triggers the main reminder automation after the configured delay.
+
+    You must create one automation from this blueprint for each automation
+    created from the Notifications blueprint, using the same snooze helpers.
+  domain: automation
+  homeassistant:
+    min_version: "2024.10.0"
+  input:
+    notify_service:
+      name: (Required) Mobile Notification Service
+      description: >
+        Must match the service used in the Notifications blueprint.
+        Example: notify.mobile_app_my_phone
+      selector:
+        text: {}
+
+    slot1_enabled:
+      name: "Slot 1 - Enable"
+      default: true
+      selector:
+        boolean: {}
+    slot1_snooze_boolean:
+      name: "Slot 1 - Snooze Helper"
+      description: Must match the helper used in the Notifications blueprint.
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot2_enabled:
+      name: "Slot 2 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot2_snooze_boolean:
+      name: "Slot 2 - Snooze Helper"
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot3_enabled:
+      name: "Slot 3 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot3_snooze_boolean:
+      name: "Slot 3 - Snooze Helper"
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot4_enabled:
+      name: "Slot 4 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot4_snooze_boolean:
+      name: "Slot 4 - Snooze Helper"
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot5_enabled:
+      name: "Slot 5 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot5_snooze_boolean:
+      name: "Slot 5 - Snooze Helper"
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+    slot6_enabled:
+      name: "Slot 6 - Enable"
+      default: false
+      selector:
+        boolean: {}
+    slot6_snooze_boolean:
+      name: "Slot 6 - Snooze Helper"
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
+variables:
+  notify_service: !input notify_service
+  slot1_enabled: !input slot1_enabled
+  slot2_enabled: !input slot2_enabled
+  slot3_enabled: !input slot3_enabled
+  slot4_enabled: !input slot4_enabled
+  slot5_enabled: !input slot5_enabled
+  slot6_enabled: !input slot6_enabled
+
+mode: parallel
+max: 10
+
+trigger:
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_TAKEN_SLOT1
+    id: taken_slot1
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_SNOOZE_SLOT1
+    id: snooze_slot1
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_TAKEN_SLOT2
+    id: taken_slot2
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_SNOOZE_SLOT2
+    id: snooze_slot2
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_TAKEN_SLOT3
+    id: taken_slot3
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_SNOOZE_SLOT3
+    id: snooze_slot3
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_TAKEN_SLOT4
+    id: taken_slot4
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_SNOOZE_SLOT4
+    id: snooze_slot4
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_TAKEN_SLOT5
+    id: taken_slot5
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_SNOOZE_SLOT5
+    id: snooze_slot5
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_TAKEN_SLOT6
+    id: taken_slot6
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: MED_SNOOZE_SLOT6
+    id: snooze_slot6
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: taken_slot1
+          - condition: template
+            value_template: "{{ slot1_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot1
+
+      - conditions:
+          - condition: trigger
+            id: snooze_slot1
+          - condition: template
+            value_template: "{{ slot1_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot1
+          - action: input_boolean.turn_on
+            target:
+              entity_id: !input slot1_snooze_boolean
+
+      - conditions:
+          - condition: trigger
+            id: taken_slot2
+          - condition: template
+            value_template: "{{ slot2_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot2
+
+      - conditions:
+          - condition: trigger
+            id: snooze_slot2
+          - condition: template
+            value_template: "{{ slot2_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot2
+          - action: input_boolean.turn_on
+            target:
+              entity_id: !input slot2_snooze_boolean
+
+      - conditions:
+          - condition: trigger
+            id: taken_slot3
+          - condition: template
+            value_template: "{{ slot3_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot3
+
+      - conditions:
+          - condition: trigger
+            id: snooze_slot3
+          - condition: template
+            value_template: "{{ slot3_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot3
+          - action: input_boolean.turn_on
+            target:
+              entity_id: !input slot3_snooze_boolean
+
+      - conditions:
+          - condition: trigger
+            id: taken_slot4
+          - condition: template
+            value_template: "{{ slot4_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot4
+
+      - conditions:
+          - condition: trigger
+            id: snooze_slot4
+          - condition: template
+            value_template: "{{ slot4_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot4
+          - action: input_boolean.turn_on
+            target:
+              entity_id: !input slot4_snooze_boolean
+
+      - conditions:
+          - condition: trigger
+            id: taken_slot5
+          - condition: template
+            value_template: "{{ slot5_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot5
+
+      - conditions:
+          - condition: trigger
+            id: snooze_slot5
+          - condition: template
+            value_template: "{{ slot5_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot5
+          - action: input_boolean.turn_on
+            target:
+              entity_id: !input slot5_snooze_boolean
+
+      - conditions:
+          - condition: trigger
+            id: taken_slot6
+          - condition: template
+            value_template: "{{ slot6_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot6
+
+      - conditions:
+          - condition: trigger
+            id: snooze_slot6
+          - condition: template
+            value_template: "{{ slot6_enabled }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: med_reminder_slot6
+          - action: input_boolean.turn_on
+            target:
+              entity_id: !input slot6_snooze_boolean
