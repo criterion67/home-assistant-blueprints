@@ -1,0 +1,23 @@
+blueprint:
+  name: Water Leak Alert - Snooze Handler
+  description: "Part 2 of 3. Handles the Snooze button tap on water leak notifications. Turns on the snooze input_boolean, causing Triggered Response to skip one cycle."
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    snooze_boolean:
+      name: Snooze Input Boolean
+      description: "Must match the helper in the Triggered Response blueprint."
+      selector:
+        entity:
+          domain: input_boolean
+mode: single
+trigger:
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: SNOOZE_LEAK
+action:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: !input snooze_boolean
