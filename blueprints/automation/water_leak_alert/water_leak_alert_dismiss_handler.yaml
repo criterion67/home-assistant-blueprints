@@ -1,0 +1,23 @@
+blueprint:
+  name: Water Leak Alert - Dismiss Handler
+  description: "Part 3 of 3. Handles the Dismiss button tap on water leak notifications. Turns on the dismiss input_boolean, stopping the Triggered Response loop until the next trigger."
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    dismiss_boolean:
+      name: Dismiss Input Boolean
+      description: "Must match the helper in the Triggered Response blueprint."
+      selector:
+        entity:
+          domain: input_boolean
+mode: single
+trigger:
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: DISMISS_LEAK
+action:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: !input dismiss_boolean
