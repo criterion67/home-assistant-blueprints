@@ -1,0 +1,106 @@
+blueprint:
+  name: Water Leak Alert - Triggered Response
+  description: "Part 1 of 3. Monitors moisture sensors and triggers a repeating alert loop. TTS announcement, mobile notification with Snooze and Dismiss, and siren pulsing every 5 minutes while any sensor is wet and dismiss is off."
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    leak_sensors:
+      name: Leak Sensors
+      selector:
+        entity:
+          multiple: true
+          domain: binary_sensor
+          device_class: moisture
+    siren_switch:
+      name: Siren Switch
+      selector:
+        entity:
+          domain: switch
+    tts_service:
+      name: TTS Service
+      default: tts.home_assistant_cloud
+      selector:
+        text: {}
+    media_player:
+      name: Media Player for TTS
+      selector:
+        entity:
+          domain: media_player
+    notify_service:
+      name: Mobile Notification Service
+      description: "Example: notify.mobile_app_my_phone"
+      selector:
+        text: {}
+    snooze_boolean:
+      name: Snooze Input Boolean
+      description: "Pauses the current alert cycle. Set by Snooze Handler. Resets after 5 min."
+      selector:
+        entity:
+          domain: input_boolean
+    dismiss_boolean:
+      name: Dismiss Input Boolean
+      description: "Stops alerting entirely. Set by Dismiss Handler. Resets on next trigger."
+      selector:
+        entity:
+          domain: input_boolean
+variables:
+  tts_service: !input tts_service
+  notify_service: !input notify_service
+  leak_sensors: !input leak_sensors
+  snooze_boolean: !input snooze_boolean
+  dismiss_boolean: !input dismiss_boolean
+  triggered_name: "{{ trigger.to_state.name }}"
+mode: restart
+trigger:
+  - platform: state
+    entity_id: !input leak_sensors
+    to: "on"
+action:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: !input dismiss_boolean
+  - action: input_boolean.turn_off
+    target:
+      entity_id: !input snooze_boolean
+  - repeat:
+      while:
+        - condition: template
+          value_template: "{{ expand(leak_sensors) | selectattr('state', 'eq', 'on') | list | count > 0 and is_state(dismiss_boolean, 'off') }}"
+      sequence:
+        - if:
+            - condition: state
+              entity_id: !input snooze_boolean
+              state: "off"
+          then:
+            - action: "{{ tts_service }}"
+              data:
+                entity_id: !input media_player
+                message: "Attention, a water leak has been detected at the {{ triggered_name }}. Please check the area and turn off the water."
+                language: en-US
+            - action: "{{ notify_service }}"
+              data:
+                title: "Water Leak Detected!"
+                message: "Leak detected at {{ triggered_name }}. Tap to respond."
+                data:
+                  actions:
+                    - action: SNOOZE_LEAK
+                      title: Snooze 5 min
+                    - action: DISMISS_LEAK
+                      title: Dismiss
+            - delay: "00:00:10"
+            - repeat:
+                count: 3
+                sequence:
+                  - action: switch.turn_on
+                    target:
+                      entity_id: !input siren_switch
+                  - delay: "00:00:08"
+                  - action: switch.turn_off
+                    target:
+                      entity_id: !input siren_switch
+                  - delay: "00:00:12"
+        - delay: "00:05:00"
+        - action: input_boolean.turn_off
+          target:
+            entity_id: !input snooze_boolean
